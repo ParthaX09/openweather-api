@@ -1,0 +1,23 @@
+{
+  "valid_coordinates": [
+    { "name": "London", "lat": 51.5074, "lon": -0.1278 },
+    { "name": "Tokyo", "lat": 35.6762, "lon": 139.6503 },
+    { "name": "Sydney", "lat": -33.8688, "lon": 151.2093 },
+    { "name": "Cairo", "lat": 30.0444, "lon": 31.2357 },
+    { "name": "Quito", "lat": -0.1807, "lon": -78.4678 }
+  ],
+  "boundary_coordinates": [
+    { "lat": 0.0, "lon": 0.0, "name": "Null Island" },
+    { "lat": 90.0, "lon": 0.0, "name": "North Pole" },
+    { "lat": -90.0, "lon": 0.0, "name": "South Pole" },
+    { "lat": 0.0, "lon": 180.0, "name": "Date Line East" },
+    { "lat": 0.0, "lon": -180.0, "name": "Date Line West" }
+  ],
+  "invalid_coordinates": [
+    { "lat": 91.0, "lon": 0.0 },
+    { "lat": -91.0, "lon": 0.0 },
+    { "lat": 0.0, "lon": 181.0 },
+    { "lat": 0.0, "lon": -181.0 },
+    { "lat": "invalid", "lon": "invalid" }
+  ]
+}

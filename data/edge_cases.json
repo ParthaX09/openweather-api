@@ -1,0 +1,23 @@
+{
+  "city_names": {
+    "special_characters": [
+      "New-York",
+      "St. John's",
+      "Frankfurt/Oder",
+      "Kyiv",
+      "São Paulo",
+      "München"
+    ],
+    "unicode_inputs": [
+      "北京",
+      "Москва",
+      "Athens (Αθήνα)",
+      "Reykjavík",
+      "Al-Quds (القدس)"
+    ],
+    "very_long": [
+      "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch",
+      "Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupokaiwhenuakitanatahu"
+    ]
+  }
+}

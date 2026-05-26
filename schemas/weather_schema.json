@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CurrentWeather",
+  "type": "object",
+  "required": ["coord", "weather", "base", "main", "visibility", "wind", "clouds", "dt", "sys", "id", "name", "cod"],
+  "properties": {
+    "coord": {
+      "type": "object",
+      "required": ["lon", "lat"],
+      "properties": {
+        "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 }
+      },
+      "additionalProperties": false
+    },
+    "weather": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "main", "description", "icon"],
+        "properties": {
+          "id": { "type": "integer" },
+          "main": { "type": "string" },
+          "description": { "type": "string" },
+          "icon": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "base": { "type": "string" },
+    "main": {
+      "type": "object",
+      "required": ["temp", "feels_like", "temp_min", "temp_max", "pressure", "humidity"],
+      "properties": {
+        "temp": { "type": "number" },
+        "feels_like": { "type": "number" },
+        "temp_min": { "type": "number" },
+        "temp_max": { "type": "number" },
+        "pressure": { "type": "integer", "minimum": 0 },
+        "humidity": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "sea_level": { "type": "integer" },
+        "grnd_level": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "visibility": { "type": "integer", "minimum": 0 },
+    "wind": {
+      "type": "object",
+      "required": ["speed", "deg"],
+      "properties": {
+        "speed": { "type": "number", "minimum": 0 },
+        "deg": { "type": "number", "minimum": 0, "maximum": 360 },
+        "gust": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "rain": {
+      "type": "object",
+      "properties": {
+        "1h": { "type": "number" },
+        "3h": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "snow": {
+      "type": "object",
+      "properties": {
+        "1h": { "type": "number" },
+        "3h": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "clouds": {
+      "type": "object",
+      "required": ["all"],
+      "properties": {
+        "all": { "type": "integer", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": false
+    },
+    "dt": { "type": "integer" },
+    "sys": {
+      "type": "object",
+      "required": ["country", "sunrise", "sunset"],
+      "properties": {
+        "type": { "type": "integer" },
+        "id": { "type": "integer" },
+        "message": { "type": "string" },
+        "country": { "type": "string" },
+        "sunrise": { "type": "integer" },
+        "sunset": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "timezone": { "type": "integer" },
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
+    "cod": { "type": ["integer", "string"] }
+  },
+  "additionalProperties": true
+}

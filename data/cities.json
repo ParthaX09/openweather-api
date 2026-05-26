@@ -1,0 +1,21 @@
+{
+  "valid_cities": [
+    "London",
+    "New York",
+    "Tokyo",
+    "Paris",
+    "Sydney",
+    "Berlin",
+    "Mumbai",
+    "Cairo",
+    "Rio de Janeiro",
+    "Moscow"
+  ],
+  "invalid_cities": [
+    "InvalidCityXYZ123",
+    "NonExistentPlaceNameHere",
+    " ",
+    "1234567890",
+    "None"
+  ]
+}

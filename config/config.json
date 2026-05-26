@@ -1,0 +1,21 @@
+{
+  "environments": {
+    "staging": {
+      "base_url": "https://api.openweathermap.org",
+      "timeout": 5,
+      "max_retries": 3,
+      "backoff_factor": 0.5
+    },
+    "production": {
+      "base_url": "https://api.openweathermap.org",
+      "timeout": 10,
+      "max_retries": 5,
+      "backoff_factor": 1.0
+    }
+  },
+  "default_env": "staging",
+  "limits": {
+    "max_response_time_ms": 1500,
+    "max_payload_size_bytes": 1048576
+  }
+}
