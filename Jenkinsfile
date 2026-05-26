@@ -2,14 +2,17 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'RUN_LIVE_TESTS', defaultValue: false, description: 'Check to execute integration tests against the live OpenWeatherMap API')
+        booleanParam(
+            name: 'RUN_LIVE_TESTS',
+            defaultValue: false,
+            description: 'Check to execute integration tests against the live OpenWeatherMap API'
+        )
     }
 
+    // Only static env vars here - no credentials() call at pipeline level
     environment {
-        // Safe mapping of API key credential. Set up a secret text credential in Jenkins named 'openweather-api-key'
-        OPENWEATHER_API_KEY = credentials('openweather-api-key')
         OPENWEATHER_BASE_URL = 'https://api.openweathermap.org'
-        ENV = 'staging'
+        ENV                  = 'staging'
     }
 
     stages {
@@ -22,14 +25,13 @@ pipeline {
 
         stage('Setup Environment') {
             steps {
-                script {
-                    sh '''
-                        echo "Initializing virtual environment..."
-                        python3 -m venv .venv
-                        .venv/bin/pip install --upgrade pip
-                        .venv/bin/pip install -r requirements.txt
-                    '''
-                }
+                sh '''
+                    echo "Initializing virtual environment..."
+                    python3 -m venv .venv
+                    .venv/bin/pip install --upgrade pip --quiet
+                    .venv/bin/pip install -r requirements.txt --quiet
+                    mkdir -p reports logs
+                '''
             }
         }
 
@@ -38,13 +40,13 @@ pipeline {
                 expression { return !params.RUN_LIVE_TESTS }
             }
             steps {
-                script {
-                    sh '''
-                        echo "Running test suite in offline mock mode..."
-                        # Output JUnit XML report for Jenkins tracking and self-contained HTML report
-                        .venv/bin/pytest --junitxml=reports/junit.xml --html=reports/report.html --self-contained-html
-                    '''
-                }
+                sh '''
+                    echo "Running test suite in offline mock mode (no API key required)..."
+                    .venv/bin/pytest \
+                        --junitxml=reports/junit.xml \
+                        --html=reports/report.html \
+                        --self-contained-html
+                '''
             }
         }
 
@@ -52,33 +54,39 @@ pipeline {
             when {
                 expression { return params.RUN_LIVE_TESTS }
             }
+            // Credential is only bound here - live stage only
+            environment {
+                OPENWEATHER_API_KEY = credentials('openweather-api-key')
+            }
             steps {
-                script {
-                    sh '''
-                        echo "Running test suite in live API mode..."
-                        # Execute against live endpoints using credentials injection
-                        .venv/bin/pytest --live --junitxml=reports/junit.xml --html=reports/report.html --self-contained-html
-                    '''
-                }
+                sh '''
+                    echo "Running test suite against live OpenWeatherMap API..."
+                    .venv/bin/pytest \
+                        --live \
+                        --junitxml=reports/junit.xml \
+                        --html=reports/report.html \
+                        --self-contained-html
+                '''
             }
         }
     }
 
     post {
         always {
-            script {
-                // Publish JUnit test results in Jenkins UI
-                junit allowEmptyResults: true, testResults: 'reports/junit.xml'
-                
-                // Archive HTML test reports and framework logs as build artifacts
-                archiveArtifacts artifacts: 'reports/report.html, logs/framework.log', fingerprint: true
-            }
+            // junit and archiveArtifacts require a node/workspace context
+            // agent any at pipeline level guarantees this block runs on a node
+            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+            archiveArtifacts(
+                artifacts: 'reports/report.html, logs/framework.log',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
         }
         success {
-            echo "API automation execution completed successfully."
+            echo 'Pipeline completed successfully - all API automation tests passed.'
         }
         failure {
-            echo "API automation execution encountered test failures or environmental errors."
+            echo 'Pipeline failed - check the Console Output and archived artifacts above for details.'
         }
     }
 }
