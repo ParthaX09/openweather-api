@@ -5,11 +5,10 @@ pipeline {
         booleanParam(
             name: 'RUN_LIVE_TESTS',
             defaultValue: false,
-            description: 'Check to execute integration tests against the live OpenWeatherMap API'
+            description: 'Leave UNCHECKED to run offline mock tests (no API key needed). CHECK to run against the live OpenWeatherMap API.'
         )
     }
 
-    // Only static env vars here - no credentials() call at pipeline level
     environment {
         OPENWEATHER_BASE_URL = 'https://api.openweathermap.org'
         ENV                  = 'staging'
@@ -26,7 +25,7 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 sh '''
-                    echo "Initializing virtual environment..."
+                    echo "Setting up Python virtual environment..."
                     python3 -m venv .venv
                     .venv/bin/pip install --upgrade pip --quiet
                     .venv/bin/pip install -r requirements.txt --quiet
@@ -35,13 +34,14 @@ pipeline {
             }
         }
 
+        // ── DEFAULT ── runs when RUN_LIVE_TESTS = false (unchecked)
         stage('Execute Mock Tests') {
             when {
-                expression { return !params.RUN_LIVE_TESTS }
+                expression { return params.RUN_LIVE_TESTS == false }
             }
             steps {
                 sh '''
-                    echo "Running test suite in offline mock mode (no API key required)..."
+                    echo "Running 100 test cases in offline mock mode (no API key required)..."
                     .venv/bin/pytest \
                         --junitxml=reports/junit.xml \
                         --html=reports/report.html \
@@ -50,31 +50,30 @@ pipeline {
             }
         }
 
+        // ── OPTIONAL ── runs only when RUN_LIVE_TESTS = true (checked)
         stage('Execute Live API Tests') {
             when {
-                expression { return params.RUN_LIVE_TESTS }
-            }
-            // Credential is only bound here - live stage only
-            environment {
-                OPENWEATHER_API_KEY = credentials('openweather-api-key')
+                expression { return params.RUN_LIVE_TESTS == true }
             }
             steps {
-                sh '''
-                    echo "Running test suite against live OpenWeatherMap API..."
-                    .venv/bin/pytest \
-                        --live \
-                        --junitxml=reports/junit.xml \
-                        --html=reports/report.html \
-                        --self-contained-html
-                '''
+                // withCredentials only binds here - credential is NEVER
+                // touched during mock runs because the stage is fully skipped
+                withCredentials([string(credentialsId: 'openweather-api-key', variable: 'OPENWEATHER_API_KEY')]) {
+                    sh '''
+                        echo "Running test suite against live OpenWeatherMap API..."
+                        .venv/bin/pytest \
+                            --live \
+                            --junitxml=reports/junit.xml \
+                            --html=reports/report.html \
+                            --self-contained-html
+                    '''
+                }
             }
         }
     }
 
     post {
         always {
-            // junit and archiveArtifacts require a node/workspace context
-            // agent any at pipeline level guarantees this block runs on a node
             junit allowEmptyResults: true, testResults: 'reports/junit.xml'
             archiveArtifacts(
                 artifacts: 'reports/report.html, logs/framework.log',
@@ -83,10 +82,10 @@ pipeline {
             )
         }
         success {
-            echo 'Pipeline completed successfully - all API automation tests passed.'
+            echo 'All API automation tests passed successfully.'
         }
         failure {
-            echo 'Pipeline failed - check the Console Output and archived artifacts above for details.'
+            echo 'Pipeline failed - review the Console Output and archived reports above.'
         }
     }
 }
