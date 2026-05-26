@@ -149,20 +149,22 @@ pipeline {
             }
             steps {
                 script {
-                    env.OPENWEATHER_API_KEY = input(
+                    def apiKey = input(
                         message: 'Enter the OpenWeatherMap API key for live tests',
                         ok: 'Run Live Tests',
                         parameters: [password(name: 'OPENWEATHER_API_KEY', description: 'OpenWeatherMap API key')]
                     )
+                    withEnv(["OPENWEATHER_API_KEY=${apiKey}"]) {
+                        sh '''
+                            echo "Running test suite against live OpenWeatherMap API..."
+                            .venv/bin/pytest \
+                                --live \
+                                --junitxml=reports/junit.xml \
+                                --html=reports/report.html \
+                                --self-contained-html
+                        '''
+                    }
                 }
-                sh '''
-                    echo "Running test suite against live OpenWeatherMap API..."
-                    .venv/bin/pytest \
-                        --live \
-                        --junitxml=reports/junit.xml \
-                        --html=reports/report.html \
-                        --self-contained-html
-                '''
             }
         }
     }
@@ -184,5 +186,6 @@ pipeline {
         }
     }
 }
+
 
 
