@@ -90,7 +90,6 @@
 //     }
 // }
 
-
 pipeline {
     agent any
 
@@ -150,23 +149,20 @@ pipeline {
             }
             steps {
                 script {
-                    try {
-                        // withCredentials only binds here - credential is NEVER
-                        // touched during mock runs because the stage is fully skipped
-                        withCredentials([string(credentialsId: 'openweather-api-key', variable: 'OPENWEATHER_API_KEY')]) {
-                            sh '''
-                                echo "Running test suite against live OpenWeatherMap API..."
-                                .venv/bin/pytest \
-                                    --live \
-                                    --junitxml=reports/junit.xml \
-                                    --html=reports/report.html \
-                                    --self-contained-html
-                            '''
-                        }
-                    } catch (Exception e) {
-                        error("Live API tests require Jenkins credential 'openweather-api-key'. Add it under Credentials or uncheck RUN_LIVE_TESTS.")
-                    }
+                    env.OPENWEATHER_API_KEY = input(
+                        message: 'Enter the OpenWeatherMap API key for live tests',
+                        ok: 'Run Live Tests',
+                        parameters: [password(name: 'OPENWEATHER_API_KEY', description: 'OpenWeatherMap API key')]
+                    )
                 }
+                sh '''
+                    echo "Running test suite against live OpenWeatherMap API..."
+                    .venv/bin/pytest \
+                        --live \
+                        --junitxml=reports/junit.xml \
+                        --html=reports/report.html \
+                        --self-contained-html
+                '''
             }
         }
     }
@@ -188,4 +184,5 @@ pipeline {
         }
     }
 }
+
 
