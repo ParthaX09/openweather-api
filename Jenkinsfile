@@ -94,9 +94,9 @@ pipeline {
     agent any
 
     environment {
-        OPENWEATHER_API_KEY = 'YOUR_REAL_OPENWEATHER_API_KEY'
+        OPENWEATHER_API_KEY = ''
         OPENWEATHER_BASE_URL = 'https://api.openweathermap.org'
-        GIT_REPO = 'https://github.com/your-org/openweather.git'  // Update this to your repo
+        GIT_REPO = 'https://github.com/ParthaX09/openweather-api.git'  // Update this to your repo
         GIT_BRANCH = 'main'  // Or your branch name
     }
 
