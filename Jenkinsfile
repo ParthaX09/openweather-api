@@ -93,96 +93,56 @@
 pipeline {
     agent any
 
-    parameters {
-        booleanParam(
-            name: 'RUN_LIVE_TESTS',
-            defaultValue: false,
-            description: 'Leave UNCHECKED to run offline mock tests (no API key needed). CHECK to run against the live OpenWeatherMap API.'
-        )
-    }
-
     environment {
+        OPENWEATHER_API_KEY = 'YOUR_REAL_OPENWEATHER_API_KEY'
         OPENWEATHER_BASE_URL = 'https://api.openweathermap.org'
-        ENV                  = 'staging'
+        GIT_REPO = 'https://github.com/your-org/openweather.git'  // Update this to your repo
+        GIT_BRANCH = 'main'  // Or your branch name
     }
 
     stages {
         stage('Checkout') {
             steps {
-                cleanWs()
-                checkout scm
-            }
-        }
-
-        stage('Setup Environment') {
-            steps {
                 sh '''
-                    echo "Setting up Python virtual environment..."
-                    python3 -m venv .venv
-                    .venv/bin/pip install --upgrade pip --quiet
-                    .venv/bin/pip install -r requirements.txt --quiet
-                    mkdir -p reports logs
+                    rm -rf openweather
+                    git clone --branch ${GIT_BRANCH} ${GIT_REPO} openweather
+                    cd openweather
                 '''
             }
         }
 
-        // ── DEFAULT ── runs when RUN_LIVE_TESTS = false (unchecked)
-        stage('Execute Mock Tests') {
-            when {
-                expression { return params.RUN_LIVE_TESTS == false }
-            }
+        stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "Running 100 test cases in offline mock mode (no API key required)..."
-                    .venv/bin/pytest \
-                        --junitxml=reports/junit.xml \
-                        --html=reports/report.html \
-                        --self-contained-html
+                    cd openweather
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
                 '''
             }
         }
 
-        // ── OPTIONAL ── runs only when RUN_LIVE_TESTS = true (checked)
-        stage('Execute Live API Tests') {
-            when {
-                expression { return params.RUN_LIVE_TESTS == true }
-            }
+        stage('Run Live Tests') {
             steps {
-                script {
-                    def apiKey = input(
-                        message: 'Enter the OpenWeatherMap API key for live tests',
-                        ok: 'Run Live Tests',
-                        parameters: [password(name: 'OPENWEATHER_API_KEY', description: 'OpenWeatherMap API key')]
-                    )
-                    withEnv(["OPENWEATHER_API_KEY=${apiKey}"]) {
-                        sh '''
-                            echo "Running test suite against live OpenWeatherMap API..."
-                            .venv/bin/pytest \
-                                --live \
-                                --junitxml=reports/junit.xml \
-                                --html=reports/report.html \
-                                --self-contained-html
-                        '''
-                    }
-                }
+                sh '''
+                    cd openweather
+                    . venv/bin/activate
+                    pytest --live --junitxml=reports/junit.xml
+                '''
             }
         }
     }
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: 'reports/junit.xml'
-            archiveArtifacts(
-                artifacts: 'reports/report.html, logs/framework.log',
-                allowEmptyArchive: true,
-                fingerprint: true
-            )
+            archiveArtifacts artifacts: 'openweather/reports/report.html, openweather/reports/junit.xml, openweather/logs/*.log', allowEmptyArchive: true
         }
         success {
-            echo 'All API automation tests passed successfully.'
+            echo 'Live API tests completed successfully.'
         }
         failure {
-            echo 'Pipeline failed - review the Console Output and archived reports above.'
+            echo 'Live API tests failed. Inspect console output and archived reports.'
         }
     }
 }
